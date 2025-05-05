@@ -26,11 +26,11 @@ resource "aws_s3_bucket_ownership_controls" "tstbcgoatownercntrl" {
   }
 }
 
-resource "aws_s3_bucket_acl" "tstbcgoats3acl" {
-  depends_on = [ aws_s3_bucket_ownership_controls.tstbcgoatownercntrl ]
-  bucket = aws_s3_bucket.tstbcgoatbkt.id
-  acl = "private"
-}
+# resource "aws_s3_bucket_acl" "tstbcgoats3acl" {
+#   depends_on = [ aws_s3_bucket_ownership_controls.tstbcgoatownercntrl ]
+#   bucket = aws_s3_bucket.tstbcgoatbkt.id
+#   acl = "private"
+# }
 
 resource "aws_s3_bucket_versioning" "tstbcgoatvrsnng" {
   bucket = aws_s3_bucket.tstbcgoatbkt.id
@@ -39,7 +39,14 @@ resource "aws_s3_bucket_versioning" "tstbcgoatvrsnng" {
   }
 }
 
+resource "aws_s3_bucket_public_access_block" "tstbcgoatbktpblcaccss" {
+  bucket = aws_s3_bucket.tstbcgoatbkt.id
+}
+
 resource "aws_s3_bucket_policy" "tstbcgoatbktpol" {
+  depends_on = [
+    aws_s3_bucket_public_access_block.tstbcgoatbktpblcaccss
+  ]
   bucket = aws_s3_bucket.tstbcgoatbkt.id
   policy = jsonencode({
     "Version": "2012-10-17",
@@ -48,8 +55,11 @@ resource "aws_s3_bucket_policy" "tstbcgoatbktpol" {
             "Sid": "PublicReadGetObject",
             "Effect": "Allow",
             "Principal": "*",
-            "Action": "s3:GetObject",
-            "Resource": "arn:aws:s3:::bcgoat-net-test/*"
+            "Action": [
+              "s3:GetObject",
+              "s3:PutObject",
+            ],
+            "Resource": "${aws_s3_bucket.tstbcgoatbkt.arn}/*"
         }
     ]
 })
@@ -73,6 +83,8 @@ resource "aws_s3_object" "tstbcgoatupld" {
   bucket = aws_s3_bucket.tstbcgoatbkt.id
   for_each = fileset("../websitefiles/", "*.html")
   key = each.value
+  source = "../websitefiles/${each.value}"
+  content_type = "text/html"
 }
 
 ## Creating CloudFront WAF rules
@@ -114,7 +126,7 @@ resource "aws_wafv2_web_acl" "tstbcgoatwafrule" {
     }
   }
 
-  token_domains = ["bcgoat.net"]
+  #token_domains = ["bcgoat.net"]
   
   visibility_config {
     cloudwatch_metrics_enabled = true
@@ -125,7 +137,27 @@ resource "aws_wafv2_web_acl" "tstbcgoatwafrule" {
 
 ## Creating Cloudfront Distribution
 
+resource "aws_cloudfront_cache_policy" "tstbcgoatcchplcy" {
+  name = "myCachingpolicy"
+  
+  parameters_in_cache_key_and_forwarded_to_origin {
+  
+    cookies_config {
+      cookie_behavior = "none"
+    }
+    
+    headers_config {
+      header_behavior = "none"
+    }
+
+    query_strings_config {
+      query_string_behavior = "none"
+    }
+  }
+}
+
 resource "aws_cloudfront_distribution" "tstbcgoatcldfrntdstrbtnres" {
+  
   origin {
     domain_name = aws_s3_bucket_website_configuration.tstbcgoatwbst.website_endpoint
     origin_id = "tstbcgoatcldfrntdstrbtnorigin"
@@ -133,24 +165,31 @@ resource "aws_cloudfront_distribution" "tstbcgoatcldfrntdstrbtnres" {
     custom_origin_config {
       http_port              = 80
       https_port             = 443
-      origin_protocol_policy = "https-only"
+      origin_protocol_policy = "http-only"
       origin_ssl_protocols   = ["TLSv1.2"]
     }
   }
+  
   enabled = true
+  
   restrictions {
     geo_restriction {
     restriction_type = "none"
-    #locations = []  
     }  
   }
+  
   viewer_certificate {
     cloudfront_default_certificate = true
   }
+  
   default_cache_behavior {
+    cache_policy_id = aws_cloudfront_cache_policy.tstbcgoatcchplcy.id
     allowed_methods  = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
     cached_methods   = ["GET", "HEAD"]
     target_origin_id = "tstbcgoatcldfrntdstrbtnorigin"
     viewer_protocol_policy = "https-only"
   }
+  
+  web_acl_id = aws_wafv2_web_acl.tstbcgoatwafrule.arn
+
 }
