@@ -1,4 +1,4 @@
-# Variable definition Syntax
-# variable "image_id" {
-#   type = string
-# }
+variable "domainnaim" {
+  type = string
+  default = "bcgoat.net"
+}
