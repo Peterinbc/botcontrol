@@ -1,11 +1,6 @@
 ## Creating route 53 records ##
 
-resource "aws_route53_zone" "bcgoatr53zone" {
-  name = var.domainnaim
-}
-
 data "aws_route53_zone" "bcgoatr53zone" {
-    depends_on = [ aws_route53_zone.bcgoatr53zone ]
   name = var.domainnaim
 }
 
