@@ -23,7 +23,8 @@ resource "aws_cloudfront_distribution" "tstbcgoatcldfrntdstrbtnres" {
   
   enabled = true
   web_acl_id = aws_wafv2_web_acl.tstbcgoatwafrule.arn
-  # aliases = [var.domainnaim]
+  aliases = [var.domainnaim]
+  comment = "${var.domainnaim}"
 
   origin {
     domain_name = aws_s3_bucket_website_configuration.tstbcgoatwbst.website_endpoint
@@ -43,15 +44,15 @@ resource "aws_cloudfront_distribution" "tstbcgoatcldfrntdstrbtnres" {
     }  
   }
   
-  viewer_certificate {
-    cloudfront_default_certificate = true
-  }
-
   # viewer_certificate {
-  #   acm_certificate_arn      = aws_acm_certificate.bcgoatacmcert.arn
-  #   ssl_support_method       = "sni-only"
-  #   minimum_protocol_version = "TLSv1.2_2021"
+  #   cloudfront_default_certificate = true
   # }
+
+  viewer_certificate {
+    acm_certificate_arn      = aws_acm_certificate.bcgoatacmcert.arn
+    ssl_support_method       = "sni-only"
+    minimum_protocol_version = "TLSv1.2_2021"
+  }
   
   default_cache_behavior {
     cache_policy_id = aws_cloudfront_cache_policy.tstbcgoatcchplcy.id

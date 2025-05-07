@@ -18,11 +18,4 @@ resource "aws_route53_record" "bcgoatr53cldfrntrecord" {
   
 }
 
-# resource "aws_route53_record" "bcgoatr53acmcnamerecord" {
-#   zone_id = aws_route53_zone.bcgoatr53zone.zone_id
-#   # TO BE DEALT WITH ## name    = ""
-#   type    = "CNAME"
-#   ttl     = 300
-#   ## TO BE DEALT WITH records = [aws_cloudfront_distribution.tstbcgoatcldfrntdstrbtnres.arn]
-# }
 

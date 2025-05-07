@@ -22,7 +22,7 @@ resource "aws_route53_record" "bcgoatr53acmcnamerecord" {
   zone_id         = data.aws_route53_zone.bcgoatr53zone.zone_id
 }
 
-# resource "aws_acm_certificate_validation" "bcgoatcertvldtn" {
-#   certificate_arn         = aws_acm_certificate.bcgoatacmcert.arn
-#   validation_record_fqdns = [for record in aws_route53_record.bcgoatr53acmcnamerecord : record.fqdn]
-# }
+resource "aws_acm_certificate_validation" "bcgoatcertvldtn" {
+  certificate_arn         = aws_acm_certificate.bcgoatacmcert.arn
+  validation_record_fqdns = [for record in aws_route53_record.bcgoatr53acmcnamerecord : record.fqdn]
+}

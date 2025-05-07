@@ -71,3 +71,10 @@ resource "aws_s3_object" "tstbcgoatupld" {
   source = "../websitefiles/${each.value}"
   content_type = "text/html"
 }
+
+resource "aws_s3_object" "tstbcgoatjsonupld" {
+  bucket = aws_s3_bucket.tstbcgoatbkt.id
+  key = "pets"
+  source = "../websitefiles/pets"
+  content_type = "application/json"
+}
